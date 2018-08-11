@@ -1,0 +1,24 @@
+{
+  "name": "line-us-web",
+  "version": "1.0.0",
+  "description": "Line-Us robot interactive web drawing",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "line-us"
+  ],
+  "author": "Jonathan Hassall",
+  "repository" :
+  { "type" : "git"
+  , "url" : "https://github.com/jonhassall/line-us-web.git"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.3",
+    "express-handlebars": "^3.0.0",
+    "net": "^1.0.2"
+  }
+}
