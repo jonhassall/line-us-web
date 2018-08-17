@@ -22,12 +22,14 @@ npm install
 Run the server
 
 ```
-node server.js
+node app.js
 ```
 Open a web browser and navigate to:
 ```
 http://localhost:3000
 ```
+
+Video demonstration: [Watch here](https://www.jonhassall.com/assets/2018/08/Line-Us-Web-Interface-Video-1080-lower.mp4)
 
 ## Acknowledgments
 
