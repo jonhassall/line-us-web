@@ -29,7 +29,7 @@ var LineUsSender = {
     
         //Canvas event listeners to allow drawing lines
         canvas.addEventListener('mousedown', function (e) {
-            current_line.push({ x: (mouse.x / canvas.width), y: (mouse.y / canvas.height) })
+            current_line.push({ x: _.round(mouse.x / canvas.width, 3), y: _.round(mouse.y / canvas.height, 3) })
             canvas.addEventListener('mousemove', onPaint, false);
         }, false);
     
@@ -41,7 +41,7 @@ var LineUsSender = {
         }, false);
     
         var onPaint = function () {
-            current_line.push({ x: (mouse.x / canvas.width), y: (mouse.y / canvas.height) })   
+            current_line.push({ x: _.round(mouse.x / canvas.width, 3), y: _.round(mouse.y / canvas.height, 3) })   
             ctx.beginPath();
             ctx.moveTo(prev_mouse.x, prev_mouse.y);
             ctx.lineTo(mouse.x, mouse.y);
