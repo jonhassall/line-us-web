@@ -26,6 +26,7 @@ http://localhost:3000
 ```
 
 Video demonstration: [Watch here](https://www.jonhassall.com/assets/2018/08/Line-Us-Web-Interface-Video-1080-lower.mp4)
+
 Screenshot: [View](https://www.jonhassall.com/assets/2019/03/lineus-screenshot.png)
 
 The first section implements WebSockets, and the second section implements the HTTP API.
