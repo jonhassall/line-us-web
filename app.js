@@ -32,6 +32,24 @@ app.use(bodyParser.json())
 //If you experience problems, consider setting a hosts entry
 var host = 'line-us.local';
 
+//Set bounds of usable area of Line-Us platform
+//See https://github.com/Line-us/Line-us-Programming/blob/master/Documentation/LineUsDrawingArea.pdf
+var bound_x_min = 700;
+var bound_x_max = 1625;
+var bound_y_min = -1000;
+var bound_y_max = 1000;
+var bound_z_min = 100;
+var bound_z_max = 1000;
+
+//Current pen position
+var current_x = 1000;
+var current_y = 1000;
+var current_z = 1000;
+
+//Timestamp when pen will be automatically lifted, to prevent pen being damaged
+var penUp_time = 0;
+var checkPenUp_timer;
+
 //Serve web client
 app.get('/', function (req, res) {
     console.log('Request for /');
@@ -40,16 +58,178 @@ app.get('/', function (req, res) {
     });
 });
 
+//------------------------------------------------------------------------------
+//Part 1: Buttons/API methods that use the WebSockets technique
+app.post('/api/pendown', function (req, res) {
+    move('pendown', res);
+});
+app.post('/api/penup', function (req, res) {
+    move('penup', res);
+});
+app.post('/api/down', function (req, res) {
+    move('down', res);
+});
+app.post('/api/up', function (req, res) {
+    move('up', res);
+});
+app.post('/api/left', function (req, res) {
+    move('left', res);
+});
+app.post('/api/right', function (req, res) {
+    move('right', res);
+});
+app.post('/api/ul', function (req, res) {
+    move('ul', res);
+});
+app.post('/api/ur', function (req, res) {
+    move('ur', res);
+});
+app.post('/api/dl', function (req, res) {
+    move('dl', res);
+});
+app.post('/api/dr', function (req, res) {
+    move('dr', res);
+});
+app.post('/api/home', function (req, res) {
+    ws.send("G28");
+    current_x = 1000;
+    current_y = 1000;
+    current_z = 1000;
+    res.send('OK');
+});
+app.post('/api/ping', function (req, res) {
+    ws.ping();
+    res.send('OK');
+});
+
+//const WebSocket = require('ws');
+const WebSocket = require('isomorphic-ws')
+const ws = new WebSocket('ws://' + host, {
+    autoConnect: true,
+    autoReconnect: true
+});
+wsSetup();
+
+function wsSetup() {
+    ws.on('open', () => {
+        console.log('open');
+    });
+    ws.on('close', () => {
+        console.log('close');
+    });
+    ws.on('ping', () => {
+        console.log('ping');
+    });
+    ws.on('error', (error) => {
+        this.emit('error', 'LineUs: websocket error: ' + e.error.message)
+    });
+    ws.on('message', function incoming(data) {
+        console.log('ws on message');
+        console.log(data);
+    });
+}
+
+//Set a timer that will automatically lift the pen after 5 seconds to prevent damage to the pen
+function penUpTimer_set() {
+    penUp_time = Date.now() + 5000;
+    console.log('penUp_timer set: ' + penUp_time);
+    penUpTimer_stop();
+    checkPenUp_timer = setInterval(function () {
+        console.log("Compare " + Date.now() + " with " + penUp_time);
+        if (Date.now() >= penUp_time) {
+            console.log('time to stop it');
+            move('penup');
+            penUpTimer_stop();
+        }
+    }, 1000);
+}
+//Clear the pen timer
+function penUpTimer_stop() {
+    clearInterval(checkPenUp_timer);
+}
+
+//Move the pen using a command. Res is optional and is an Express response object
+function move(command, res) {
+    // ws.ping()
+    console.log('move ' + command);
+    switch (command) {
+        case 'pendown':
+            current_z = bound_y_min;
+            break;
+        case 'penup':
+            current_z = bound_y_max;
+            break;
+        case 'down':
+            current_y = current_y - 15;
+            break;
+        case 'up':
+            current_y = current_y + 15;
+            break;
+        case 'left':
+            current_x = current_x - 15;
+            break;
+        case 'right':
+            current_x = current_x + 15;
+            break;
+        case 'ul':
+            current_y = current_y + 15;
+            current_x = current_x - 15;
+            break;
+        case 'ur':
+            current_y = current_y + 15;
+            current_x = current_x + 15;
+            break;
+        case 'dl':
+            current_y = current_y - 15;
+            current_x = current_x - 15;
+            break;
+        case 'dr':
+            current_y = current_y - 15;
+            current_x = current_x + 15;
+            break;
+    }
+
+    //Deal with maximums
+    if (current_x > bound_x_max) { current_x = bound_x_max; };
+    if (current_x < bound_x_min) { current_x = bound_x_min; };
+    if (current_y > bound_y_max) { current_y = bound_y_max; };
+    if (current_y < bound_y_min) { current_y = bound_y_min; };
+    if (current_z > bound_z_max) { current_z = bound_z_max; };
+    if (current_z < bound_z_min) { current_z = bound_z_min; };
+
+    gcode_command = 'G01 X' + Math.round(current_x) + ' Y' + Math.round(current_y);
+    gcode_command += ' Z' + current_z;
+
+    if (command != "penup") {
+        //Set the pen auto up anti-damage timer
+        penUpTimer_set();
+    } else {
+        //Clear the pen auto up anti-damage timer
+        penUpTimer_stop();
+    }
+
+    console.log("Sending: " + gcode_command);
+
+    ws.send(gcode_command, function ack(error) {
+        console.log('Sent');
+        if (error) {
+            console.log(error);
+            if (res) {
+                res.status(500)
+            }
+        } else {
+            if (res) {
+                res.send('OK');
+            }
+        }
+    });
+};
+
+//------------------------------------------------------------------------------
+//Part 2: API methods that use the HTTP API technique
 //Allow POST of a single line in JSON format
 app.post('/api/lines', function (req, res) {
     console.log('/api/lines called');
-
-    //Set bounds of usable area of Line-Us platform
-    //See https://github.com/Line-us/Line-us-Programming/blob/master/Documentation/LineUsDrawingArea.pdf
-    var bound_x_low = 700;
-    var bound_x_high = 1625;
-    var bound_y_low = -1000;
-    var bound_y_high = 1000;
 
     var gcode_commands = []; //Array of pending gcode_commands
     //Encode requested line as GCODE format
@@ -61,8 +241,8 @@ app.post('/api/lines', function (req, res) {
         line_parsed[i].x = Math.abs(line_parsed[i].x - 1);
 
         //Bounds calculation from percentage coordinates to Line-Us platform bounds
-        var x = ((bound_x_high - bound_x_low) * line_parsed[i].x) + bound_x_low;
-        var y = ((bound_y_high - bound_y_low) * line_parsed[i].y) + bound_y_low;
+        var x = ((bound_y_max - bound_y_min) * line_parsed[i].x) + bound_y_min;
+        var y = ((bound_y_max - bound_y_min) * line_parsed[i].y) + bound_y_min;
 
         //Round coordinates
         gcode_command = 'G01 X' + Math.round(x) + ' Y' + Math.round(y);

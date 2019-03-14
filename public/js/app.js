@@ -48,6 +48,29 @@ var LineUsSender = {
             ctx.closePath();
             ctx.stroke();
         };
+
+        //Initialize each button
+        //Buttons are of class 'pencontrol' and their actions are their 'id'
+        var buttons = document.getElementsByClassName("pencontrol");
+        for (var key in buttons) {
+            console.log(buttons[key].id);
+            buttons[key].onclick = function(event) {
+                console.log(event.srcElement.id);
+                //Send JSON line data to the Node API
+                $.ajax({
+                    type: "POST",
+                    url: '/api/' + event.srcElement.id,
+                    data: {
+                    },
+                    success: function(data) {
+                        console.log('Success sending request' + event.srcElement.id);
+                    },
+                    error: function(data) {
+                        console.log('Error sending request ' + event.srcElement.id);
+                    }
+                });
+            }
+        };
     },
     sendLine: function(line) {
         //Send JSON line data to the Node API

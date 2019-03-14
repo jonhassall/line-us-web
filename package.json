@@ -10,15 +10,17 @@
     "line-us"
   ],
   "author": "Jonathan Hassall",
-  "repository" :
-  { "type" : "git"
-  , "url" : "https://github.com/jonhassall/line-us-web.git"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jonhassall/line-us-web.git"
   },
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.18.3",
-    "express": "^4.16.3",
-    "express-handlebars": "^3.0.0",
-    "net": "^1.0.2"
+    "express": "^4.16.4",
+    "express-handlebars": "^3.0.2",
+    "isomorphic-ws": "^4.0.1",
+    "net": "^1.0.2",
+    "ws": "^6.2.0"
   }
 }
